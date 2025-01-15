@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include "trie.h"
 
 using namespace std;
 
@@ -19,18 +20,16 @@ int main() {
     // Mark the output file as a regex file (not a DFA file)
     out_file << "regex" << endl;
 
-    // Reading the accepted words
-    for (int i = 0; i < no_of_accepted_words; i++) {
-        in_file >> regex;
-
-        // If the word is not the last word, add a pipe (or) at the end
-        // Else, just the word (for the last word)
-        if (i != no_of_accepted_words - 1) {
-            out_file << regex << "|";
-        } else {
-            out_file << regex;
-        }
+    // Creating a trie to store the accepted words
+    Trie trie;
+    for (int i = 0; i < no_of_accepted_words; ++i) {
+        string word;
+        in_file >> word;
+        trie.insert(word);
     }
+
+    trie.printTrieRegex(trie.getRoot(), regex);
+    out_file << regex << endl;
 
     return 0;
 }
