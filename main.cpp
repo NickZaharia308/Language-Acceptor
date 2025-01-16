@@ -4,6 +4,7 @@
 #include "trie.h"
 #include <vector>
 #include <cstring>
+#include <set>
 
 using namespace std;
 
@@ -58,13 +59,21 @@ string create_regex(vector<int> unique_positions, char unique_letters[101],
                 regex += ".";
             }
         } else {
-            regex += "(";
+             regex += "(";
+
+            set<string> substrings_set;
             for (int j = 0; j < no_of_accepted_words; j++) {
-                // The substring with unique letters positions should be in the regex
-                for(int k = 0; k < unique_positions.size(); k++) {
-                    regex += accepted_words[j][unique_positions[k]];
+                string substring = "";
+                for (int k = 0; k < unique_positions.size(); k++) {
+                    substring += accepted_words[j][unique_positions[k]];
                 }
-                if (j != no_of_accepted_words - 1) {
+                substrings_set.insert(substring);
+            }
+
+            vector<string> substrings(substrings_set.begin(), substrings_set.end());
+            for (int j = 0; j < substrings.size(); j++) {
+                regex += substrings[j];
+                if (j != substrings.size() - 1) {
                     regex += "|";
                 }
             }
