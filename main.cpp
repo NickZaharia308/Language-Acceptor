@@ -64,14 +64,14 @@ string create_regex(vector<int> unique_positions, char unique_letters[101],
             set<string> substrings_set;
             for (int j = 0; j < no_of_accepted_words; j++) {
                 string substring = "";
-                for (int k = 0; k < unique_positions.size(); k++) {
+                for (long unsigned int k = 0; k < unique_positions.size(); k++) {
                     substring += accepted_words[j][unique_positions[k]];
                 }
                 substrings_set.insert(substring);
             }
 
             vector<string> substrings(substrings_set.begin(), substrings_set.end());
-            for (int j = 0; j < substrings.size(); j++) {
+            for (long unsigned int j = 0; j < substrings.size(); j++) {
                 regex += substrings[j];
                 if (j != substrings.size() - 1) {
                     regex += "|";
@@ -166,6 +166,14 @@ int main() {
     // for (int i = 0; i < no_of_rejected_words; i++) {
     //     cout << rejected_words[i] << endl;
     // }
+
+    // If there are no more rejected words, we can just return the unique letters
+    if (no_of_rejected_words == 0) {
+        out_file << unique_letters << endl;
+        in_file.close();
+        out_file.close();
+        return 0;
+    }
 
     // Find the unique positions
     vector<int> unique_positions = find_unique_positions(vector<string>(accepted_words, accepted_words + no_of_accepted_words), rejected_words, word_length);
