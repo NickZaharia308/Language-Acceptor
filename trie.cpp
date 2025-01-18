@@ -78,7 +78,8 @@ TrieNode* Trie::getRoot() {
 
 // Function that prints the regex of the trie
 void Trie::printTrieRegex(TrieNode* root, string& regex) {
-    if (root == nullptr) return;
+    if (root == nullptr)
+        return;
 
     int no_of_children = getNumberOfChildren(root);
 
