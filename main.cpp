@@ -9,54 +9,8 @@
 
 using namespace std;
 
-string final_regex = string(1000, '.');
 
 vector<vector<int>> unique_chars_for_each_accepted_word = {};
-
-// Function to see if a word is accepted by the regex
-// Function to check if a word is accepted by the regex
-bool is_accepted_by_regex(const string& word, const string& regex) {
-    long unsigned int i = 0, j = 0;
-    while (i < word.length() && j < regex.length()) {
-        if (regex[j] == '.') {
-            i++;
-            j++;
-        } else if (regex[j] == '(') {
-            j++;
-            int start = j;
-            while (regex[j] != ')') {
-                j++;
-            }
-            string options = regex.substr(start, j - start);
-            bool matched = false;
-            size_t pos = 0;
-            while ((pos = options.find('|')) != string::npos) {
-                string option = options.substr(0, pos);
-                if (word.substr(i, option.length()) == option) {
-                    matched = true;
-                    i += option.length();
-                    break;
-                }
-                options.erase(0, pos + 1);
-            }
-            if (!matched && word.substr(i, options.length()) == options) {
-                matched = true;
-                i += options.length();
-            }
-            if (!matched) {
-                return false;
-            }
-            j++;
-        } else {
-            if (word[i] != regex[j]) {
-                return false;
-            }
-            i++;
-            j++;
-        }
-    }
-    return i == word.length() && j == regex.length();
-}
 
 // Function to find the unique characters for each accepted word
 // Unique means that the character isn't in another rejected word
@@ -77,6 +31,8 @@ void find_unique_chars_for_each_accepted_word(const vector<string>& accepted_wor
                 unique_chars.push_back(i);
             }
         }
+
+        // If there are no unique characters, we add -1
         if (unique_chars.size() == 0) {
             unique_chars.push_back(-1);
         }   
@@ -87,6 +43,8 @@ void find_unique_chars_for_each_accepted_word(const vector<string>& accepted_wor
 
 
 // Function to find unique positions with substrings of increasing lengths
+// This will find the smallest substring (consecutive positions)
+// that is unique (matches) for all accepted words and rejects all rejected words
 vector<int> find_unique_positions(const vector<string>& accepted_words, const vector<string>& rejected_words, int word_length) {
     vector<int> unique_positions;
 
@@ -113,7 +71,8 @@ vector<int> find_unique_positions(const vector<string>& accepted_words, const ve
 
             // Push the indices of the unique positions
             if (is_unique) {
-                // All positions
+
+                // All positions are pushed
                 for (int i = pos; i < pos + length; i++) {
                     unique_positions.push_back(i);
                 }
@@ -125,6 +84,10 @@ vector<int> find_unique_positions(const vector<string>& accepted_words, const ve
     return unique_positions;
 }
 
+// Function to create the regex
+// It uses the unique positions (consecutive position substring created in
+// find_unique_positions()) and the unique letters
+// (from find_unique_chars_for_each_accepted_word())
 string create_regex(vector<int> unique_positions, char unique_letters[101],
                     int word_length, char accepted_words[401][101],
                     int no_of_accepted_words) {
@@ -142,11 +105,10 @@ string create_regex(vector<int> unique_positions, char unique_letters[101],
             set<string> substrings_set;
             for (int j = 0; j < no_of_accepted_words; j++) {
                 string substring = "";
-                bool start_writing_unique = false;
                 bool contains_unique_in_range = false;
                 for (long unsigned int k = 0; k < unique_positions.size(); k++) {
-                    // If the position of the character is the same as the unique position
-                    // then we add the character to the substring, else it will be a dot
+
+                    // Early check to see if the word contains unique characters in the range
                     if (std::find(unique_chars_for_each_accepted_word[j].begin(),
                         unique_chars_for_each_accepted_word[j].end(),
                         unique_positions[k]) != unique_chars_for_each_accepted_word[j].end()) {
@@ -155,7 +117,10 @@ string create_regex(vector<int> unique_positions, char unique_letters[101],
                 }
 
                 for (long unsigned int k = 0; k < unique_positions.size(); k++) {
+                    
                     // If the position of the character is the same as the unique position
+                    // or the word doesn't have unique characters in the range
+                    // or the word has no unique characters
                     // then we add the character to the substring, else it will be a dot
                     if (std::find(unique_chars_for_each_accepted_word[j].begin(),
                         unique_chars_for_each_accepted_word[j].end(),
@@ -163,14 +128,11 @@ string create_regex(vector<int> unique_positions, char unique_letters[101],
                         || unique_chars_for_each_accepted_word[j][0] == -1
                         || !contains_unique_in_range) {
 
-                        //cout << accepted_words[j][unique_positions[k]]<< endl;
                         substring += accepted_words[j][unique_positions[k]];
-                        start_writing_unique = true;
                     } else {
                         substring += ".";
                     }
                 }
-               // cout << substring << endl;
 
                 // If the substring contains only dots then we don't add it
                 if (substring.find_first_not_of('.') != string::npos) {
@@ -178,7 +140,7 @@ string create_regex(vector<int> unique_positions, char unique_letters[101],
                 }
             }
 
-            // Insert the substrings into a trie
+            // First we create a trie with the substrings to get the regex
             Trie trie;
             for (const auto& substring : substrings_set) {
                 trie.insert(substring);
@@ -187,8 +149,7 @@ string create_regex(vector<int> unique_positions, char unique_letters[101],
             string localTrieRegex;
             trie.printTrieRegex(trie.getRoot(), localTrieRegex);
 
-            //cout << localTrieRegex << endl;
-
+            // Then we create a regex with the substrings
             string localSubSetRegex = "";
             vector<string> substrings(substrings_set.begin(), substrings_set.end());
             for (long unsigned int j = 0; j < substrings.size(); j++) {
@@ -198,6 +159,7 @@ string create_regex(vector<int> unique_positions, char unique_letters[101],
                 }
             }
 
+            // We choose the smallest regex
             if (localTrieRegex.size() < localSubSetRegex.size()) {
                 regex += localTrieRegex;
             } else {
@@ -208,6 +170,7 @@ string create_regex(vector<int> unique_positions, char unique_letters[101],
             i += unique_positions.size() - 1;
         }
     }
+    regex += "\0";
     return regex;
 }
 
@@ -231,11 +194,9 @@ int main() {
     // Mark the output file as a regex file (not a DFA file)
     out_file << "regex" << endl;
 
-    // Creating a trie to store the accepted words
-    Trie trie;
+    // Reading the accepted words
     for (int i = 0; i < no_of_accepted_words; i++) {
         in_file >> accepted_words[i];
-        trie.insert(accepted_words[i]);
     }
 
     // Reading the rejected words
@@ -261,6 +222,7 @@ int main() {
             unique_letters[i] = '.';
         }
     }
+    unique_letters[word_length] = '\0';
 
     // For all rejected words, we should check if they have the unique letters
     // in the specific positions. If they don't, they should be removed from
@@ -278,6 +240,7 @@ int main() {
         }
 
         if (!matches) {
+
             // Remove the word if it doesn't match the unique letters
             it = rejected_words.erase(it);
             no_of_rejected_words--;
@@ -285,13 +248,6 @@ int main() {
             ++it;
         }
     }
-
-    // cout << unique_letters << endl;
-
-    // // print rejected words
-    // for (int i = 0; i < no_of_rejected_words; i++) {
-    //     cout << rejected_words[i] << endl;
-    // }
 
     // If there are no more rejected words, we can just return the unique letters
     if (no_of_rejected_words == 0) {
@@ -304,29 +260,14 @@ int main() {
     // Find the unique positions
     vector<int> unique_positions = find_unique_positions(vector<string>(accepted_words, accepted_words + no_of_accepted_words), rejected_words, word_length);
 
-    // // Print the unique positions
-    // for (int i = 0; i < unique_positions.size(); i++) {
-    //     cout << unique_positions[i] << endl;
-    // }
-
     find_unique_chars_for_each_accepted_word(vector<string>(accepted_words, accepted_words + no_of_accepted_words), rejected_words, word_length);
 
-    // Print the accepted words and thei unique characters    
-    // for (int i = 0; i < no_of_accepted_words; i++) {
-    //     cout << accepted_words[i] << ": ";
-    //     for (int j = 0; j < unique_chars_for_each_accepted_word[i].size(); j++) {
-    //         cout << unique_chars_for_each_accepted_word[i][j] << " ";
-    //     }
-    //     cout << endl;
-    // }
-
-    // // Create the regex
-    final_regex = create_regex(unique_positions, unique_letters, word_length, accepted_words, no_of_accepted_words);
-    // cout << final_regex << endl;
+    // Create the regex
+    string final_regex = create_regex(unique_positions, unique_letters, word_length, accepted_words, no_of_accepted_words);
 
     // Write the regex to the output file
     out_file << final_regex << endl;
-    
+
     // Closing the files
     in_file.close();
     out_file.close();

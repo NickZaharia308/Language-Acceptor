@@ -2,11 +2,9 @@
 
 // TrieNode Constructor
 TrieNode::TrieNode() {
-    for (int i = 0; i < 26; ++i) {
-        // All children should be initialized to nullptr
+    for (int i = 0; i < 27; ++i) {
         children[i] = nullptr;
     }
-    // Initially, no word ends at this node
     isEndOfWord = false;
 }
 
@@ -18,20 +16,26 @@ Trie::Trie() {
 // Trie Destructor
 Trie::~Trie() {}
 
-// Convert a character to its index
+// Function that converts a character to its index
 int Trie::fromCharToIndex(char ch) {
+    if (ch == '.') {
+        return 26;
+    }
     return ch - 'a';
 }
 
-// Convert an index to its character
+// Function that converts an index to its character
 char Trie::fromIndexToChar(int index) {
+    if (index == 26) {
+        return '.';
+    }
     return index + 'a';
 }
 
 // Function that returns the number of children of a node
 int Trie::getNumberOfChildren(TrieNode* root) {
     int count = 0;
-    for (int i = 0; i < 26; i++) {
+    for (int i = 0; i < 27; i++) {
         if (root->children[i] != nullptr) {
             count++;
         }
@@ -49,7 +53,6 @@ void Trie::insert(const string& word) {
         }
         node = node->children[index];
     }
-    // Mark the end of the word
     node->isEndOfWord = true;
 }
 
@@ -59,29 +62,13 @@ bool Trie::search(const string& word) {
     for (char ch : word) {
         int index = fromCharToIndex(ch);
         if (node->children[index] == nullptr) {
-            // Character not found
             return false;
         }
         node = node->children[index];
     }
+
     // True if the node is the end of a valid word
     return node->isEndOfWord;
-}
-
-// Function checking if there is any word in the trie
-// that starts with the given prefix
-bool Trie::startsWithPrefix(const string& prefix) {
-    TrieNode* node = root;
-    for (char ch : prefix) {
-        int index = fromCharToIndex(ch);
-        if (node->children[index] == nullptr) {
-            // Character not found
-            return false;
-        }
-        node = node->children[index];
-    }
-    // Prefix exists
-    return true;
 }
 
 // Function that returns the root of the trie
@@ -95,22 +82,25 @@ void Trie::printTrieRegex(TrieNode* root, string& regex) {
 
     int no_of_children = getNumberOfChildren(root);
 
-    // Add opening parenthesis if there are multiple children
+    // If there are multiple children a parenthesis should be added
     if (no_of_children > 1) {
         regex += "(";
     }
 
-    bool firstChild = true; // Track if this is the first child to handle "|" appropriately
+    // We should track if this is the first child to handle "|" appropriately
+    bool firstChild = true;
 
     // Traverse the children
-    for (int i = 0; i < 26; i++) {
+    for (int i = 0; i < 27; i++) {
         if (root->children[i] != nullptr) {
             if (!firstChild) {
-                regex += "|"; // Add '|' before processing the next child
+
+                // Adding '|' before processing the next child
+                regex += "|";
             }
             firstChild = false;
 
-            // Add the character for the current child
+            // This is the character for the current child
             regex += fromIndexToChar(i);
 
             // Recurse for the child node
@@ -121,10 +111,5 @@ void Trie::printTrieRegex(TrieNode* root, string& regex) {
     // Add closing parenthesis if there were multiple children
     if (no_of_children > 1) {
         regex += ")";
-    }
-
-    // Add an end marker if this node represents the end of a word
-    if (root->isEndOfWord) {
-        regex += ""; // You can append markers like "$" or leave it as is for standard regex
     }
 }
